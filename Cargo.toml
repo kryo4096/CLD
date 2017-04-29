@@ -1,0 +1,7 @@
+[package]
+name = "magnet"
+version = "0.1.0"
+authors = ["kryo4096"]
+
+[dependencies]
+regex = "0.2"
