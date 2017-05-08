@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use std::fmt::{Display,Formatter,Result};
 #[derive(Clone, Copy)]
-pub struct HTTPStatusLine{
+pub struct HTTPStatus{
     version: &'static str,
     code: u16,
     name: &'static str,
 }
 
-impl HTTPStatusLine {
-    pub fn from_code(code: u16) -> Option<HTTPStatusLine>{
+impl HTTPStatus {
+    pub fn from_code(code: u16) -> Option<HTTPStatus>{
         let mut status_codes: HashMap<u16,&'static str> = [
             (100,"Continue"),
             (101,"Switching Protocols"),
@@ -54,7 +54,7 @@ impl HTTPStatusLine {
 
         if status_codes.contains_key(&code) {
 
-            Some(HTTPStatusLine{
+            Some(HTTPStatus{
                 version: "1.1",
                 code:   code,
                 name:   status_codes.entry(code).or_insert("Invalid Status Code"),
@@ -65,7 +65,7 @@ impl HTTPStatusLine {
     }
 }
 
-impl Display for HTTPStatusLine {
+impl Display for HTTPStatus {
     fn fmt(&self, f: &mut Formatter) -> Result {
         write!(f, "HTTP/{} {} {}\n", self.version, self.code, self.name)
     }

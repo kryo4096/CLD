@@ -10,6 +10,7 @@ use std::net::*;
 use std::io::*;
 use std::fs::*;
 use headers::HTTPHeaders;
+use status::HTTPStatus;
 
 
 
@@ -59,7 +60,7 @@ impl HTTPStream {
         self.send("\n");
     }
 
-    pub fn send_response(status: u8, header: HTTPHeaders, content: &str) {
+    pub fn send_response(status: HTTPStatus, header: HTTPHeaders, content: &str) {
         //TODO
     }
 }
