@@ -2,6 +2,7 @@ extern crate regex;
 
 mod status;
 mod headers;
+mod response;
 
 
 use regex::Regex;
@@ -11,6 +12,7 @@ use std::io::*;
 use std::fs::*;
 use headers::HTTPHeaders;
 use status::HTTPStatus;
+use response::HTTPResponse;
 
 
 
@@ -47,22 +49,14 @@ impl HTTPStream {
 
     }
 
-    pub fn send(&mut self, s : &str){
-        write!(self.stream, "{}", s);
+
+    pub fn send_response(&mut self, response: HTTPResponse) {
+        write!(self.stream, "{}", response.status);
+        write!(self.stream, "{}", response.headers);
+        write!(self.stream, "{}", response.content);
     }
 
-    pub fn sep(&mut self) {
-        write!(self.stream, "\n\n");
-    }
 
-    pub fn sendln(&mut self, s : &str){
-        self.send(s);
-        self.send("\n");
-    }
-
-    pub fn send_response(status: HTTPStatus, header: HTTPHeaders, content: &str) {
-        //TODO
-    }
 }
 
 
@@ -99,45 +93,6 @@ fn answer(stream: &mut HTTPStream, request: &str){
     }
 
 
+    stream.send_response(HTTPResponse::from_file(path));
 
-
-    match File::open(format!("www/{}",path)) {
-        Ok(mut f) => {
-            let mut content = String::new();
-
-            f.read_to_string(&mut content).unwrap();
-
-            stream.sendln("HTTP/1.1 200 OK");
-            stream.sendln(format!("Content-Type: {}",parse_file_ext(&path)).as_str());
-            stream.sep();
-            stream.send(&content);
-        }
-
-        Err(_) => {
-            stream.sendln("HTTP/1.1 404 Not Found");
-            stream.sendln("Content-Type: text/html");
-            stream.sep();
-            stream.send(include_str!("404.html"));
-        }
-    }
-
-}
-
-fn parse_file_ext(name: &str) -> &str {
-
-    let ext_opt = name.split('.').last();
-
-    let ext;
-
-    match ext_opt {
-        None => return "application/octet-stream",
-        Some(e) => ext = e ,
-    };
-
-    match ext {
-        "html" | "htm" => "text/html",
-        "css" => "text/css",
-        "txt" => "text/plain",
-        _ => "application/octet-stream",
-    }
 }
