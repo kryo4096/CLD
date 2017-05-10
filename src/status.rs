@@ -1,5 +1,9 @@
 use std::collections::HashMap;
 use std::fmt::{Display,Formatter,Result};
+
+
+
+
 #[derive(Clone, Copy)]
 pub struct HTTPStatus{
     version: &'static str,
@@ -9,7 +13,19 @@ pub struct HTTPStatus{
 
 impl HTTPStatus {
     pub fn from_code(code: u16) -> Option<HTTPStatus>{
-        let mut status_codes: HashMap<u16,&'static str> = [
+
+
+
+            Some(HTTPStatus{
+                version: "1.1",
+                code:   code,
+                name:   Self::get_message(code),
+            })
+
+    }
+
+    pub fn get_message(status: u16) -> &'static str {
+        let mut status_codes: HashMap<u16, &'static str> = [
             (100,"Continue"),
             (101,"Switching Protocols"),
             (200,"OK"),
@@ -52,16 +68,7 @@ impl HTTPStatus {
             (505,"HTTP Version not supported")
         ].iter().cloned().collect();
 
-        if status_codes.contains_key(&code) {
-
-            Some(HTTPStatus{
-                version: "1.1",
-                code:   code,
-                name:   status_codes.entry(code).or_insert("Invalid Status Code"),
-            })
-        } else {
-            None
-        }
+        status_codes.entry(status).or_insert("Invalid Status Code")
     }
 }
 

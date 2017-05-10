@@ -38,8 +38,8 @@ impl HTTPResponse {
         }
     }
 
-    pub fn e404() -> Self{
-        let mut res = Self::new(404,include_str!("404.html").to_string());
+    pub fn error(status :u16) -> Self{
+        let mut res = Self::new(status,format!(include_str!("error.htmlt"),status,status,HTTPStatus::get_message(status)));
         res.headers.content_type("text/html");
         res
     }
@@ -60,7 +60,7 @@ impl HTTPResponse {
             }
 
             Err(_) => {
-                Self::e404()
+                Self::error(404)
             }
         }
     }
