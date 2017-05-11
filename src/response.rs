@@ -1,6 +1,6 @@
 use headers::HTTPHeaders;
 use status::HTTPStatus;
-use std::fmt::Display;
+use std::fmt::*;
 //use std::os::Process;
 
 pub struct HTTPResponse {
@@ -30,9 +30,8 @@ impl HTTPResponse {
 
 
 impl Display for HTTPResponse {
-    pub fn fmt(&mut self, response: HTTPResponse) {
-        write!(self.stream, "{}", response.status);
-        write!(self.stream, "{}", response.headers);
-        write!(self.stream, "{}", response.content);
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "{}{}\n{}", self.status , self.headers , self.content);
+        Ok(())
     }
 }

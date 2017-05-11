@@ -4,8 +4,11 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <h1> Magnet test page</h1>
-    <p> Magnet is a Webserver written entirely in Rust. </p>
-    <p> Site Creation Time: {} <p>
+    <div id=content>
+      <h1> Magnet test page</h1>
+      <p> Magnet is a webserver written entirely in Rust. </p>
+      <p> Site Creation Time: <!pwd> <p>
+    </div>
+
   </body>
 </html>

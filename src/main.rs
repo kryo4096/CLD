@@ -5,11 +5,12 @@ mod headers;
 mod response;
 
 
-use regex::Regex;
+use regex::*;
 
 use std::net::*;
 use std::io::*;
 use std::fs::*;
+use std::process::Command;
 use response::HTTPResponse;
 
 
@@ -48,10 +49,8 @@ impl HTTPStream {
     }
 
 
-    pub fn send_response(&mut self, f: &mut Formatter) {
-        write!(f, "{}", self.status);
-        write!(f, "{}", self.headers);
-        write!(f, "{}", self.content);
+    pub fn send_response(&mut self, res: HTTPResponse) {
+        write!(self.stream, "{}", res);
     }
 
 
@@ -89,43 +88,63 @@ fn parse_mime(path: &str) -> &'static str {
     };
 
     match ext {
-        "html" | "htm" => "text/html",
+        "htmlt" | "html" | "htm" => "text/html",
         "css" => "text/css",
         "txt" => "text/plain",
         _ => "application/octet-stream",
     }
 }
 
-fn answer(request: &str) -> HTTPResponse {
-    println!("{}",&request);
-    let re = Regex::new(r"GET\s+/?(\S*)\s+HTTP").unwrap();
+fn command_replacer(caps :&Captures) -> String {
+    let out = Command::new(caps.name("command").expect("This should never happen!").as_str()).output()
+        .expect("Failed to execute command").stdout;
 
-    let caps = &re.captures(&request).expect("Invalid HTTP Request")[1];
+    String::from_utf8_lossy(&out).into_owned()
+}
 
-    let path;
+fn answer(request_str: &str) -> HTTPResponse {
+
+    let request_re = Regex::new(r"GET\s+/?(\S*)\s+HTTP").unwrap();
 
 
-    match caps {
-        "" => path = "index.htmlt",
-        s => path = s,
+    let request = &request_re.captures(&request_str);
+
+    let caps;
+
+    match request{
+        &Some(ref r) => caps = &r[1],
+        &None => return HTTPResponse::error(400),
     }
+    println!("Request:\n{}",request_str);
+    let path = match caps {
+        "" => "index.htmlt",
+        s => s,
+    };
+
+    let mut content = String::new();
 
     match File::open(format!("templates/{}",path)) {
         Ok(mut f) => {
-            let mut content = String::new();
 
             f.read_to_string(&mut content).unwrap();
-
-            let mut res = HTTPResponse::new(200,content);
-
-            res.headers.content_type(parse_mime(&path));
-            println!(res)
-            return res
 
         }
 
         Err(_) => {
-            return HTTPResponse::error(404)
+            return HTTPResponse::error(404);
         }
     }
+
+
+
+    let mime = parse_mime(&path);
+
+    let content_re = Regex::new(r"<!(?P<command>\S*)\s*>").unwrap();
+
+    let content_result = content_re.replace_all(&content, command_replacer);
+
+    let mut res = HTTPResponse::new(200,content_result.to_string());
+    res.headers.content_type(mime);
+    println!("Response:\n{}",res);
+    return res;
 }
