@@ -10,8 +10,6 @@ use regex::Regex;
 use std::net::*;
 use std::io::*;
 use std::fs::*;
-use headers::HTTPHeaders;
-use status::HTTPStatus;
 use response::HTTPResponse;
 
 
@@ -50,10 +48,10 @@ impl HTTPStream {
     }
 
 
-    pub fn send_response(&mut self, response: HTTPResponse) {
-        write!(self.stream, "{}", response.status);
-        write!(self.stream, "{}", response.headers);
-        write!(self.stream, "{}", response.content);
+    pub fn send_response(&mut self, f: &mut Formatter) {
+        write!(f, "{}", self.status);
+        write!(f, "{}", self.headers);
+        write!(f, "{}", self.content);
     }
 
 
@@ -71,7 +69,7 @@ fn main() {
                 let mut http_stream = HTTPStream::from_tcp_stream(stream);
                 let mut request = String::new();
                 http_stream.get_request(&mut request);
-                answer(&mut http_stream, &request);
+                http_stream.send_response(answer(&request));
 
             }
             Err(e)=>{panic!(e)}
@@ -79,7 +77,27 @@ fn main() {
     }
 }
 
-fn answer(stream: &mut HTTPStream, request: &str){
+fn parse_mime(path: &str) -> &'static str {
+
+    let ext_opt = path.split('.').last();
+
+    let ext;
+
+    match ext_opt {
+        None => return "application/octet-stream",
+        Some(e) => ext = e ,
+    };
+
+    match ext {
+        "html" | "htm" => "text/html",
+        "css" => "text/css",
+        "txt" => "text/plain",
+        _ => "application/octet-stream",
+    }
+}
+
+fn answer(request: &str) -> HTTPResponse {
+    println!("{}",&request);
     let re = Regex::new(r"GET\s+/?(\S*)\s+HTTP").unwrap();
 
     let caps = &re.captures(&request).expect("Invalid HTTP Request")[1];
@@ -88,11 +106,26 @@ fn answer(stream: &mut HTTPStream, request: &str){
 
 
     match caps {
-        "" => path = "index.html",
+        "" => path = "index.htmlt",
         s => path = s,
     }
 
+    match File::open(format!("templates/{}",path)) {
+        Ok(mut f) => {
+            let mut content = String::new();
 
-    stream.send_response(HTTPResponse::from_file(path));
+            f.read_to_string(&mut content).unwrap();
 
+            let mut res = HTTPResponse::new(200,content);
+
+            res.headers.content_type(parse_mime(&path));
+            println!(res)
+            return res
+
+        }
+
+        Err(_) => {
+            return HTTPResponse::error(404)
+        }
+    }
 }
