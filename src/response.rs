@@ -21,8 +21,8 @@ impl HTTPResponse {
     }
 
     pub fn error(status :u16) -> Self{
-        let mut res = Self::new(status,format!(include_str!("error.htmlt"),status,status,HTTPStatus::get_message(status)));
-        res.headers.content_type("text/html");
+        let mut res = Self::new(status,format!(include_str!("error-template.html"),status,status,HTTPStatus::get_message(status)));
+        res.headers.content_type("text/html","utf-8");
         res
     }
 

@@ -2,13 +2,11 @@
   <head>
     <title> Magnet Webserver </title>
     <link rel="stylesheet" href="style.css">
+    <meta refresh-content="1">
   </head>
   <body>
     <div id=content>
-      <h1> Magnet test page</h1>
-      <p> Magnet is a webserver written entirely in Rust. </p>
-      <p> Site Creation Time: <!pwd> <p>
+      <p> Time of Creation: <!date> </p>
     </div>
-
   </body>
 </html>

@@ -13,10 +13,7 @@ use std::fs::*;
 use std::process::Command;
 use response::HTTPResponse;
 
-
-
-
-
+use std::str;
 
 struct HTTPStream {
     stream: TcpStream,
@@ -50,7 +47,8 @@ impl HTTPStream {
 
 
     pub fn send_response(&mut self, res: HTTPResponse) {
-        write!(self.stream, "{}", res);
+        write!(self.stream, "{}", res).unwrap();
+
     }
 
 
@@ -99,7 +97,10 @@ fn command_replacer(caps :&Captures) -> String {
     let out = Command::new(caps.name("command").expect("This should never happen!").as_str()).output()
         .expect("Failed to execute command").stdout;
 
-    String::from_utf8_lossy(&out).into_owned()
+    let mut s = String::from_utf8_lossy(&out).into_owned();
+    s = str::replace(&s,"\t","&emsp;");
+
+    str::replace(&s.to_string(),"\n","<br>")
 }
 
 fn answer(request_str: &str) -> HTTPResponse {
@@ -111,7 +112,7 @@ fn answer(request_str: &str) -> HTTPResponse {
 
     let caps;
 
-    match request{
+    match request {
         &Some(ref r) => caps = &r[1],
         &None => return HTTPResponse::error(400),
     }
@@ -136,15 +137,10 @@ fn answer(request_str: &str) -> HTTPResponse {
     }
 
 
+    let cont = Regex::new(r"<!(?P<command>\S*)>").unwrap().replace_all(&content, command_replacer);
 
-    let mime = parse_mime(&path);
-
-    let content_re = Regex::new(r"<!(?P<command>\S*)\s*>").unwrap();
-
-    let content_result = content_re.replace_all(&content, command_replacer);
-
-    let mut res = HTTPResponse::new(200,content_result.to_string());
-    res.headers.content_type(mime);
+    let mut res = HTTPResponse::new(200,cont.to_string());
+    res.headers.content_type(parse_mime(&path),"utf-8");
     println!("Response:\n{}",res);
     return res;
 }
